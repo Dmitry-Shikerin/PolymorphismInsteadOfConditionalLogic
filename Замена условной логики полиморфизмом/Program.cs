@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Замена_условной_логики_полиморфизмом
 {
@@ -8,14 +10,21 @@ namespace Замена_условной_логики_полиморфизмом
         {
             var orderForm = new OrderForm();
 
-            PaymentSystem paymentSystem;
+            PaymentSystem[] paymentSystems =
+            {
+                new QIWI("QIWI"),
+                new WebMoney("WebMoney"),
+                new Card("Card")
+            };
 
             PaymantSystemFactory paymantSystemFactory = new PaymantSystemFactory
-                (new QIWI("QIWI"), new WebMoney("WebMoney"), new Card("Card"));
+                (paymentSystems);
 
-            var systemId = orderForm.ShowForm();
+            var paymantSistemsNames = paymentSystems.Select(paymantSistemName => paymantSistemName.Name);
 
-            paymentSystem = paymantSystemFactory.Create(systemId);
+            string systemId = orderForm.ShowForm(paymantSistemsNames);
+
+            PaymentSystem paymentSystem = paymantSystemFactory.Create(systemId);
 
             paymentSystem.ShowPaymentResult();
         }
@@ -23,11 +32,18 @@ namespace Замена_условной_логики_полиморфизмом
 
     public class OrderForm
     {
-        public string ShowForm()
+        public string ShowForm(IEnumerable<string> paymantSystemsNames)
         {
-            Console.WriteLine("Мы принимаем: QIWI, WebMoney, Card");
+            Console.Write("Мы принимаем: ");
 
-            Console.WriteLine("Какое системой вы хотите совершить оплату?");
+            foreach (string paymantSystemName in paymantSystemsNames)
+            {
+                Console.Write($" {paymantSystemName},");
+            }
+
+            Console.WriteLine();
+
+            Console.WriteLine("Какой системой вы хотите совершить оплату?");
             return Console.ReadLine();
         }
     }
@@ -63,9 +79,9 @@ namespace Замена_условной_логики_полиморфизмом
 
     abstract class PaymentSystem
     {
-        protected PaymentSystem(string name) 
-        { 
-            if(string.IsNullOrEmpty(name))
+        protected PaymentSystem(string name)
+        {
+            if (string.IsNullOrEmpty(name))
                 throw new ArgumentNullException(nameof(name));
 
             Name = name;
@@ -81,7 +97,7 @@ namespace Замена_условной_логики_полиморфизмом
             Console.WriteLine("Оплата прошла успешно!");
         }
 
-        protected abstract void ShowTransition(); 
+        protected abstract void ShowTransition();
     }
 
     class QIWI : PaymentSystem
